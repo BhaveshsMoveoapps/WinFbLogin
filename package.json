@@ -1,6 +1,6 @@
 {
   "name": "react-native-win-fb-login",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
   "keywords": [
     "react-native"
   ],
-  "author": "",
+  "author": "Bhavesh Suthar",
   "license": "",
   "peerDependencies": {
     "react-native": "^0.41.2",
