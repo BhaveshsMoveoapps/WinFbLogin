@@ -1,8 +1,11 @@
 using ReactNative.Bridge;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
+using Windows.Security.Authentication.Web;
 using Windows.UI.Core;
+using winsdkfb;
 
 namespace Win.Fb.Login.RNWinFbLogin
 {
@@ -11,14 +14,39 @@ namespace Win.Fb.Login.RNWinFbLogin
     /// </summary>
     class RNWinFbLoginModule : NativeModuleBase
     {
+
+        string SID = WebAuthenticationBroker.GetCurrentApplicationCallbackUri().ToString();
+
+        FBSession _session;
+        FBPermissions _permissions;
+
         /// <summary>
         /// Instantiates the <see cref="RNWinFbLoginModule"/>.
         /// </summary>
         internal RNWinFbLoginModule()
         {
-
         }
 
+        public async Task<object> LoginAsync()
+        {
+            if (_session != null)
+            {
+                var result = await _session.LoginAsync(_permissions);
+
+                if (result.Succeeded)
+                {
+                    return result;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
         /// <summary>
         /// The name of the native module.
         /// </summary>
@@ -31,12 +59,40 @@ namespace Win.Fb.Login.RNWinFbLogin
         }
 
         [ReactMethod]
+        public void initializeFbSession(String AppID, ICallback errorCallback, ICallback successCallback)
+        {
+            _session = FBSession.ActiveSession;
+            _session.WinAppId = SID;
+            _session.FBAppId = AppID;
+
+            List<string> permissionList = new List<string>();
+            permissionList.Add("public_profile");
+            permissionList.Add("email");
+
+            _permissions = new FBPermissions(permissionList);
+            successCallback.Invoke("Initialized");
+        }
+
+        [ReactMethod]
         public void login(ICallback errorCallback, ICallback successCallback)
         {
-            RunOnDispatcher(async () => {
+
+            RunOnDispatcher(async () =>
+            {
                 try
                 {
-                    successCallback.Invoke("Yehhhhh");
+                    var result = await _session.LoginAsync(_permissions);
+                    if (result.Succeeded)
+                    {
+                        successCallback.Invoke(result);
+                        //do something
+                    }
+                    else
+                    {
+                        errorCallback.Invoke("not_available errorororor");
+                    }
+                    // var reslut = LoginAsync();
+                    // successCallback.Invoke(reslut);
 
                 }
                 catch
@@ -46,9 +102,11 @@ namespace Win.Fb.Login.RNWinFbLogin
             });
         }
 
+
         private static async void RunOnDispatcher(DispatchedHandler action)
         {
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, action);
         }
     }
+
 }
